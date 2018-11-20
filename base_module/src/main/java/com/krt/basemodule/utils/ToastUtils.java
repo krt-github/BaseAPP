@@ -2,6 +2,7 @@ package com.krt.basemodule.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.support.annotation.StringRes;
 import android.widget.Toast;
 
 /**
@@ -20,7 +21,7 @@ public class ToastUtils {
         mToast = Toast.makeText(context, "", Toast.LENGTH_SHORT);
     }
 
-    public static void show(int resId){
+    public static void show(@StringRes int resId){
         if(null != mToast){
             mToast.setText(resId);
             mToast.show();
