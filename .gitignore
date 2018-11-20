@@ -45,3 +45,5 @@ captures/
 .externalNativeBuild
 app/src/androidTest/
 app/src/test/
+base_module/src/androidTest/
+base_module/src/test/
