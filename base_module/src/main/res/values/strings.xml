@@ -1,3 +1,36 @@
 <resources>
     <string name="app_name">BaseModule</string>
+
+    <string name="tip">Tip</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading…</string>
+
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+
+    <string name="just_now">Just now</string>
+    <string name="minute_ago">minute ago</string>
+    <string name="hour_ago">hour ago</string>
+    <string name="day_ago">day ago</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="before_yesterday">Before yesterday</string>
+
+    <string name="sdf_year">-</string>
+    <string name="sdf_month">-</string>
+    <string name="sdf_day" />
+
+    <string name="press_to_speak">Press to speak</string>
+    <string name="send">Send</string>
+
+    <string name="permission_record">Record</string>
+
+    <string name="permission_deny">Request permissions denied</string>
+    <string name="permission_failed">Request permissions failed</string>
+    <string name="tip_permission_denied">Can not get %s permission, please grant %s permission in your app manager.</string>
+
+    <string name="move_up_cancel">Move up for cancel</string>
+    <string name="release_to_cancel">Release for cancel send</string>
+    <string name="release_to_send">Release for send</string>
+
 </resources>
