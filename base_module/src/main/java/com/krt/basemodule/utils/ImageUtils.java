@@ -18,6 +18,7 @@ import com.bumptech.glide.load.Key;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
+import com.bumptech.glide.request.RequestListener;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.EmptySignature;
@@ -32,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import id.zelory.compressor.Compressor;
 
@@ -329,6 +331,19 @@ public class ImageUtils {
         public void updateDiskCacheKey(MessageDigest messageDigest) throws UnsupportedEncodingException {
             messageDigest.update(id.getBytes(STRING_CHARSET_NAME));
             signature.updateDiskCacheKey(messageDigest);
+        }
+    }
+
+    public class LoggingListener<T, R> implements RequestListener<T, R> {
+        @Override public boolean onException(Exception e, Object model, Target target, boolean isFirstResource) {
+            android.util.Log.d("GLIDE", String.format(Locale.ROOT,
+                    "onException(%s, %s, %s, %s)", e, model, target, isFirstResource), e);
+            return false;
+        }
+        @Override public boolean onResourceReady(Object resource, Object model, Target target, boolean isFromMemoryCache, boolean isFirstResource) {
+            android.util.Log.d("GLIDE", String.format(Locale.ROOT,
+                    "onResourceReady(%s, %s, %s, %s, %s)", resource, model, target, isFromMemoryCache, isFirstResource));
+            return false;
         }
     }
 }
