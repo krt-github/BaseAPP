@@ -1,7 +1,7 @@
-package com.yichat.base;
+package com.krt.basemodule.push;
 
 import com.krt.basemodule.push.IPCMessage;
-import com.yichat.base.IOnReceiveInterface;
+import com.krt.basemodule.push.IOnReceiveInterface;
 
 interface IPushAidlInterface {
     void start(in IPCMessage startMsg);

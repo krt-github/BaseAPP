@@ -10,8 +10,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.annotation.CallSuper;
 
-import com.yichat.base.IOnReceiveInterface;
-import com.yichat.base.IPushAidlInterface;
 import com.krt.basemodule.connection.PersistentConnectStateChangeListener;
 import com.krt.basemodule.debug.Debug;
 import com.krt.basemodule.utils.NetUtils;

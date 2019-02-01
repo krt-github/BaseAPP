@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.yichat.base.R;
+import com.krt.base.R;
 
 /**
  * @author KRT

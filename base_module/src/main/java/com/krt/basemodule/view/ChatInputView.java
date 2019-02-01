@@ -25,6 +25,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.krt.base.R;
 import com.krt.basemodule.base.BaseArrayListRecyclerAdapter;
 import com.krt.basemodule.base.ViewHolder;
 import com.krt.basemodule.bean.ChatInputMediaBean;
@@ -34,7 +35,6 @@ import com.krt.basemodule.debug.Debug;
 import com.krt.basemodule.utils.PermissionUtils;
 import com.vanniktech.emoji.EmojiEditText;
 import com.vanniktech.emoji.EmojiPopup;
-import com.yichat.base.R;
 
 import java.io.File;
 import java.lang.annotation.Retention;

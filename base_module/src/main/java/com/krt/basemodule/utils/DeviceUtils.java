@@ -76,7 +76,7 @@ public class DeviceUtils {
 
     public static String getDeviceUUId(Context context){
         try {
-            SharedPreferences preferences = context.getSharedPreferences("spForYiChat", Context.MODE_PRIVATE);
+            SharedPreferences preferences = context.getSharedPreferences("spForBaseModule", Context.MODE_PRIVATE);
             String deviceUUID = preferences.getString("deviceUUID", null);
             if(null == deviceUUID){
                 TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);

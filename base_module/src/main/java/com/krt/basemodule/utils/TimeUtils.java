@@ -2,7 +2,8 @@ package com.krt.basemodule.utils;
 
 import android.content.Context;
 
-import com.yichat.base.R;
+
+import com.krt.base.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

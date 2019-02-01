@@ -23,8 +23,8 @@ import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.signature.EmptySignature;
 import com.bumptech.glide.util.LruCache;
 import com.bumptech.glide.util.Util;
+import com.krt.base.R;
 import com.krt.basemodule.utils.GlideConfig;
-import com.yichat.base.R;
 
 import java.io.File;
 import java.io.IOException;

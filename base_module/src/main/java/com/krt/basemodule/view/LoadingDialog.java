@@ -9,7 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
-import com.yichat.base.R;
+import com.krt.base.R;
+
 
 /**
  * LoadingDialog
