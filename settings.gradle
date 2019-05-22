@@ -1,1 +1,1 @@
-include ':app', ':base_module'
+include ':app', ':base_module', ':http_retrofit'
