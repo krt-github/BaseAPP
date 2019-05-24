@@ -17,10 +17,14 @@ public class RetrofitUtils {
 
     public static <T> void request(Observable<T> observable, Observer<T> callback){
         if(callback instanceof IObserverCallback){
-            RetrofitWrapper.request(observable, (IObserverCallback<T>)callback);
+            request(observable, (IObserverCallback<T, T>)callback);
         }else {
             RetrofitWrapper.request(observable, callback);
         }
+    }
+
+    public static <T, E> void request(Observable<T> observable, IObserverCallback<T, E> callback){
+        RetrofitWrapper.request(observable, callback);
     }
 
     public static void cancel(Disposable disposable){

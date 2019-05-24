@@ -55,17 +55,17 @@ public class RetrofitWrapper {
                 .retry(retryCount, predicate);
     }
 
-    public static <T> Observable<T> config(Observable<T> observable, IObserverCallback<T> callback){
+    public static <T, E> Observable<T> config(Observable<T> observable, IObserverCallback<T, E> callback){
         return config(observable, new RetryStrategy(), callback);
     }
 
-    public static <T> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
-                                           IObserverCallback<T> callback){
+    public static <T, E> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
+                                           IObserverCallback<T, E> callback){
         return config(observable, predicate, 3, callback);
     }
 
-    public static <T> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
-                                           int retryCount, IObserverCallback<T> callback){
+    public static <T, E> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
+                                           int retryCount, IObserverCallback<T, E> callback){
         return observable.delay(DEFAULT_DELAY_FOR_REQUEST, TimeUnit.MILLISECONDS)
                 .subscribeOn(Schedulers.io())
                 .map(callback)
@@ -79,7 +79,7 @@ public class RetrofitWrapper {
         config(observable).subscribe(callback);
     }
 
-    public static <T> void request(Observable<T> observable, IObserverCallback<T> callback){
+    public static <T, E> void request(Observable<T> observable, IObserverCallback<T, E> callback){
         config(observable, callback).subscribe(callback);
     }
 

@@ -9,5 +9,5 @@ import io.reactivex.functions.Function;
  * @author KRT
  * 2018/11/22
  */
-public interface IObserverCallback<T> extends Observer<T>, Function<T, T>, Consumer<Throwable>, Action {
+public interface IObserverCallback<T, E> extends Observer<T>, Function<T, T>, Consumer<Throwable>, Action {
 }
