@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Action;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.OkHttpClient;
@@ -56,21 +55,32 @@ public class RetrofitWrapper {
                 .retry(retryCount, predicate);
     }
 
-    public static <T> Observable<T> configWithFinally(Observable<T> observable, final Observer callback){
-        Observable<T> config = config(observable);
-        if(callback instanceof IObserverCallback){
-            return config.doFinally(new Action() {
-                public void run() throws Exception {
-                    ((IObserverCallback) callback).onFinally();
-                }
-            });
-        }else{
-            return config;
-        }
+    public static <T> Observable<T> config(Observable<T> observable, IObserverCallback<T> callback){
+        return config(observable, new RetryStrategy(), callback);
+    }
+
+    public static <T> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
+                                           IObserverCallback<T> callback){
+        return config(observable, predicate, 3, callback);
+    }
+
+    public static <T> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
+                                           int retryCount, IObserverCallback<T> callback){
+        return observable.delay(DEFAULT_DELAY_FOR_REQUEST, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.io())
+                .map(callback)
+                .doOnError(callback)
+                .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(callback)
+                .retry(retryCount, predicate);
     }
 
     public static <T> void request(Observable<T> observable, Observer<T> callback){
-        configWithFinally(observable, callback).subscribe(callback);
+        config(observable).subscribe(callback);
+    }
+
+    public static <T> void request(Observable<T> observable, IObserverCallback<T> callback){
+        config(observable, callback).subscribe(callback);
     }
 
 }

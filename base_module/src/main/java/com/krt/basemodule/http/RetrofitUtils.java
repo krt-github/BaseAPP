@@ -1,5 +1,6 @@
 package com.krt.basemodule.http;
 
+import com.krt.http_retrofit.IObserverCallback;
 import com.krt.http_retrofit.RetrofitWrapper;
 
 import java.util.List;
@@ -15,7 +16,11 @@ public class RetrofitUtils {
     }
 
     public static <T> void request(Observable<T> observable, Observer<T> callback){
-        RetrofitWrapper.request(observable, callback);
+        if(callback instanceof IObserverCallback){
+            RetrofitWrapper.request(observable, (IObserverCallback<T>)callback);
+        }else {
+            RetrofitWrapper.request(observable, callback);
+        }
     }
 
     public static void cancel(Disposable disposable){

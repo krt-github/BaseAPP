@@ -8,6 +8,7 @@ import io.reactivex.disposables.Disposable;
  */
 public abstract class DefaultObserverCallback<T> implements IObserverCallback<T> {
     private Disposable disposable;
+    private T convertedResponse;
 
     @Override
     public final void onSubscribe(Disposable d) {
@@ -15,28 +16,73 @@ public abstract class DefaultObserverCallback<T> implements IObserverCallback<T>
         onStart(d);
     }
 
+    public void onStart(Disposable disposable){}
+
+    /**
+     * Function<T, T>, map data, work on background thread
+     * @param t
+     * @return
+     * @throws Exception
+     */
     @Override
-    public final void onNext(T t) {
-        onResponse(t);
+    public final T apply(T t) throws Exception {
+        convertedResponse = doResponseInBackground(t);
+        return t;
     }
 
-    public abstract void onStart(Disposable d);
+    public T doResponseInBackground(T response){
+        return response;
+    }
 
-    public abstract void onResponse(T response);
+    /**
+     * Work on main thread
+     * @param t
+     */
+    @Override
+    public final void onNext(T t) {
+        onResponse(t, convertedResponse);
+    }
+
+    public abstract void onResponse(T response, T convertedResponse);
+
+    /**
+     * Consumer<Throwable> doOnError, work on background thread
+     * @param throwable
+     * @throws Exception
+     */
+    @Override
+    public final void accept(Throwable throwable) throws Exception {
+        doErrorInBackground(throwable);
+    }
+
+    /**
+     * NOTICE: This method maybe called more than once when retry strategy run.
+     * @param throwable
+     */
+    public void doErrorInBackground(Throwable throwable){}
 
     @Override
     public abstract void onError(Throwable e);
 
     @Override
-    public abstract void onComplete();
+    public void onComplete(){}
 
+    /**
+     * Action doFinally, work on main thread
+     * @throws Exception
+     */
     @Override
+    public final void run() throws Exception {
+        onFinally();
+    }
+
     public final void onFinally(){
         boolean isCancelByUser = null != disposable && disposable.isDisposed();
         onFinally(isCancelByUser);
         disposable = null;
+        convertedResponse = null;
     }
 
-    public abstract void onFinally(boolean isCancelByUser);
+    public void onFinally(boolean isCancelByUser){}
 
 }

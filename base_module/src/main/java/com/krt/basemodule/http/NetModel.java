@@ -35,12 +35,7 @@ public abstract class NetModel<A> implements IBaseModel {
         if(null == observable || null == callback){
             return;
         }
-        RetrofitUtils.request(observable, new DefaultObserverCallbackProxy<T>(callback){
-            public void onStart(Disposable d) {
-                recordTask(d);
-                super.onStart(d);
-            }
-        });
+        RetrofitUtils.request(observable, callback);
     }
 
     protected RequestBody createJsonRequestBody(Request request){
