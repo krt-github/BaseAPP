@@ -3,6 +3,7 @@ package com.krt.baseapp;
 import android.os.Bundle;
 
 import com.krt.basemodule.base.BaseActivity;
+import com.krt.basemodule.utils.ToastUtils;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
@@ -16,6 +17,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void init(){
+        ToastUtils.init(getContext());
         findViewById(R.id.hello).setOnClickListener(v -> {
             toast("Hello Android");
         });
