@@ -67,6 +67,7 @@ public class RetrofitWrapper {
                 .map(callback)
                 .doOnError(callback)
                 .observeOn(AndroidSchedulers.mainThread())
+                .doOnDispose(callback.getDisposeAction())
                 .doFinally(callback);
 
         IRetryPredicate<Throwable> retryPredicate = callback.getRetryPredicate();

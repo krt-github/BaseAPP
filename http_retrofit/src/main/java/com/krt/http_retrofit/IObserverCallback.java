@@ -11,5 +11,6 @@ import io.reactivex.functions.Function;
  */
 public interface IObserverCallback<T, E> extends Observer<T>, Function<T, T>, Consumer<Throwable>, Action {
     int getStartDelayMS();
+    Action getDisposeAction();
     IRetryPredicate<Throwable> getRetryPredicate();
 }

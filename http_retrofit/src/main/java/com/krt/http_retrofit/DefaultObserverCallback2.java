@@ -1,14 +1,15 @@
 package com.krt.http_retrofit;
 
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Action;
 
 /**
  * @author KRT
  * 2018/11/22
  */
 public abstract class DefaultObserverCallback2<T, E> implements IObserverCallback<T, E> {
-    private Disposable disposable;
     private E convertedResponse;
+    private boolean disposedByUser = false;
 
     @Override
     public int getStartDelayMS() {
@@ -22,7 +23,6 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
 
     @Override
     public final void onSubscribe(Disposable d) {
-        disposable = d;
         onStart(d);
     }
 
@@ -82,6 +82,15 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
     @Override
     public void onComplete(){}
 
+    @Override
+    public final Action getDisposeAction() {
+        return new Action() {
+            public void run() throws Exception {
+                disposedByUser = true;
+            }
+        };
+    }
+
     /**
      * Action doFinally, work on main thread
      * @throws Exception
@@ -92,9 +101,7 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
     }
 
     public final void onFinally(){
-        boolean isCancelByUser = null != disposable && disposable.isDisposed();
-        onFinally(isCancelByUser);
-        disposable = null;
+        onFinally(disposedByUser);
         convertedResponse = null;
     }
 
