@@ -56,23 +56,25 @@ public class RetrofitWrapper {
     }
 
     public static <T, E> Observable<T> config(Observable<T> observable, IObserverCallback<T, E> callback){
-        return config(observable, new RetryStrategy(), callback);
-    }
+        Observable<T> configObservable = observable;
 
-    public static <T, E> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
-                                           IObserverCallback<T, E> callback){
-        return config(observable, predicate, 3, callback);
-    }
+        int startDelayMS = callback.getStartDelayMS();
+        if(startDelayMS > 0){
+            configObservable = configObservable.delay(startDelayMS, TimeUnit.MILLISECONDS);
+        }
 
-    public static <T, E> Observable<T> config(Observable<T> observable, Predicate<Throwable> predicate,
-                                           int retryCount, IObserverCallback<T, E> callback){
-        return observable.delay(DEFAULT_DELAY_FOR_REQUEST, TimeUnit.MILLISECONDS)
-                .subscribeOn(Schedulers.io())
+        configObservable = configObservable.subscribeOn(Schedulers.io())
                 .map(callback)
                 .doOnError(callback)
                 .observeOn(AndroidSchedulers.mainThread())
-                .doFinally(callback)
-                .retry(retryCount, predicate);
+                .doFinally(callback);
+
+        IRetryPredicate<Throwable> retryPredicate = callback.getRetryPredicate();
+        if(null != retryPredicate && retryPredicate.getRetryCount() > 0){
+            return configObservable.retry(retryPredicate.getRetryCount(), retryPredicate);
+        }
+
+        return configObservable;
     }
 
     public static <T> void request(Observable<T> observable, Observer<T> callback){

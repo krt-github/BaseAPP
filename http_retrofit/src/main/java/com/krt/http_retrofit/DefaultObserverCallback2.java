@@ -11,6 +11,16 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
     private E convertedResponse;
 
     @Override
+    public int getStartDelayMS() {
+        return 0;
+    }
+
+    @Override
+    public IRetryPredicate<Throwable> getRetryPredicate() {
+        return null;
+    }
+
+    @Override
     public final void onSubscribe(Disposable d) {
         disposable = d;
         onStart(d);
@@ -40,7 +50,12 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
      */
     @Override
     public final void onNext(T t) {
-        onResponse(t, convertedResponse);
+        try {
+            onResponse(t, convertedResponse);
+        }catch(Exception e){
+            e.printStackTrace();
+            onError(e);
+        }
     }
 
     public abstract void onResponse(T response, E convertedResponse);

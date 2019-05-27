@@ -10,4 +10,6 @@ import io.reactivex.functions.Function;
  * 2018/11/22
  */
 public interface IObserverCallback<T, E> extends Observer<T>, Function<T, T>, Consumer<Throwable>, Action {
+    int getStartDelayMS();
+    IRetryPredicate<Throwable> getRetryPredicate();
 }
