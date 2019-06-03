@@ -56,39 +56,10 @@ public class FloatWindow {
     @Retention(value = RetentionPolicy.SOURCE)
     public @interface DragStyle{}
 
-    @IntDef(value = {
-            RESIZE_WITH_TOP_LEFT,
-            RESIZE_WITH_TOP_RIGHT,
-            RESIZE_WITH_BOTTOM_LEFT,
-            RESIZE_WITH_BOTTOM_RIGHT,
-            RESIZE_WITH_ALL
-    })
-    @Retention(value = RetentionPolicy.SOURCE)
-    public @interface ResizeTrigger{}
-
     private final int TOUCH_SLOP;
     private final float DENSITY;
     private int mSettleMargin;
     private boolean mEnableAutoSettle = true;
-
-
-
-
-
-
-
-    private boolean mEnableDrag = true;
-    private int mDragStyle = DRAG_STYLE_SIMPLE_DRAG;
-
-    private int mResizeTrigger = RESIZE_WITH_ALL;
-    private int mResizeTriggerSize = 50;
-
-
-
-
-
-
-
 
     private View mFloatView;
     private final RootViewGroup mContentRootView;
@@ -150,7 +121,8 @@ public class FloatWindow {
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display defaultDisplay = mWindowManager.getDefaultDisplay();
         defaultDisplay.getSize(mSize);
-        setResizeTriggerSize(dp2px(30));
+        int size = dp2px(30);
+        mContentRootView.setAnchorSize(size, size);
 
         initWindowLayout();
     }
@@ -205,61 +177,52 @@ public class FloatWindow {
     }
 
     public void setEnableDrag(boolean canDrag){
-        mEnableDrag = canDrag;
+        mContentRootView.setEnableDrag(canDrag);
     }
 
-
-
-
-
-
-
-
+    public void setResizeMode(int mode){
+        mContentRootView.setResizeMode(mode);
+    }
 
     public void setDragStyle(@DragStyle int dragStyle){
-        mDragStyle = dragStyle;
+        mContentRootView.setDragStyle(dragStyle);
     }
 
     public void setEnableResize(boolean canResize){
-        if(null != mContentRootView){
-            mContentRootView.setEnableResize(canResize);
-        }
-    }
-
-    public void setResizeTrigger(@ResizeTrigger int resizeTrigger){
-        mResizeTrigger = resizeTrigger;
+        mContentRootView.setEnableResize(canResize);
     }
 
     public void showResizePanel(){
+        mContentRootView.setEnableResize(true);
+    }
 
+    public void dismissResizePanel(){
+        mContentRootView.setEnableResize(false);
     }
 
     public void setResizeDraggerColor(@ColorInt int color){
         mContentRootView.getAnchorPaint().setColor(color);
     }
 
-    public void setResizeTriggerSize(int sizeDP){
-        mResizeTriggerSize = dp2px(sizeDP);
+    public void setResizeAnchorSize(int widthDP, int heightDP){
+        mContentRootView.setAnchorSize(dp2px(widthDP), dp2px(heightDP));
     }
 
-    public void setResizeDraggerStrokeWidth(int widthDP){
+    public void setResizeFrameStrokeWidth(int widthDP){
         mContentRootView.getAnchorPaint().setStrokeWidth(dp2px(widthDP));
-    }
-
-    public void setResizeAnchorResources(@DrawableRes int ... resIds){
-        mContentRootView.setAnchorBitmaps(resIds);
     }
 
     public void setResizeAnchorResources(@DrawableRes int resIds){
         mContentRootView.setAnchorBitmaps(resIds);
     }
 
-
-
-
-
-
-
+    /**
+     * Resize anchor drawable
+     * @param resIds top_left, top_right, bottom_right, bottom_left
+     */
+    public void setResizeAnchorResources(@DrawableRes int ... resIds){
+        mContentRootView.setAnchorBitmaps(resIds);
+    }
 
     @RequiresPermission(value = "android.permission.SYSTEM_ALERT_WINDOW")
     public void showFloatView(View floatView, int x, int y){
@@ -390,6 +353,8 @@ public class FloatWindow {
 
     private class RootViewGroup extends FrameLayout{
         private boolean isDrag = false;
+        private boolean enableDrag = true;
+        private int dragStyle = DRAG_STYLE_SIMPLE_DRAG;
         private float downX, downY;
         private float lastX, lastY;
 
@@ -399,6 +364,7 @@ public class FloatWindow {
         private static final int LONG_PRESS_THRESHOLD = 500; //ms
 
         private boolean enableResize = false;
+        private int resizeMode = RESIZE_WITH_ALL;
         private final Paint anchorPaint = new Paint();
         private Bitmap[] anchorBitmaps;
         private int anchorTouchWidth;
@@ -419,8 +385,22 @@ public class FloatWindow {
             anchorShowWidth = anchorTouchWidth / 2;
             anchorShowHeight = anchorTouchWidth / 2;
 
+            initMinSize();
+        }
+
+        private void initMinSize(){
             minWidth = anchorShowWidth;
             minHeight = anchorShowHeight;
+        }
+
+        public void setAnchorSize(int showWidth, int showHeight) {
+            anchorShowWidth = showWidth;
+            anchorShowHeight = showHeight;
+            initMinSize();
+        }
+
+        public void setResizeMode(int mode){
+            resizeMode = mode;
         }
 
         public Paint getAnchorPaint(){
@@ -436,7 +416,19 @@ public class FloatWindow {
             setWillNotDraw(!enable);
         }
 
+        public void setEnableDrag(boolean canDrag){
+            enableDrag = canDrag;
+        }
+
+        public void setDragStyle(@DragStyle int dragStyle){
+            dragStyle = dragStyle;
+        }
+
         private Bitmap decodeBitmap(@DrawableRes int resId){
+            if(0 == resId){
+                return null;
+            }
+
             Drawable drawable = getResources().getDrawable(resId);
             if(null == drawable){
                 return null;
@@ -493,25 +485,29 @@ public class FloatWindow {
             }
         }
 
+        private boolean isValidPosition(int position){
+            return 0 != (resizeMode & position);
+        }
+
         private void drawResizeAnchorBitmaps(final Canvas canvas, final Paint paint, final Bitmap[] bitmaps,
                                        final int canvasW, final int canvasH){
             Bitmap bitmap = bitmaps[0];
-            if(null != bitmap) {
+            if(null != bitmap && isValidPosition(RESIZE_WITH_TOP_LEFT)) {
                 canvas.drawBitmap(bitmap, 0, 0, paint);
             }
 
             bitmap = bitmaps[1];
-            if(null != bitmap) {
+            if(null != bitmap && isValidPosition(RESIZE_WITH_TOP_RIGHT)) {
                 canvas.drawBitmap(bitmap, canvasW - bitmap.getWidth(), 0, paint);
             }
 
             bitmap = bitmaps[3];
-            if(null != bitmap) {
+            if(null != bitmap && isValidPosition(RESIZE_WITH_BOTTOM_LEFT)) {
                 canvas.drawBitmap(bitmap, 0, canvasH - bitmap.getHeight(), paint);
             }
 
             bitmap = bitmaps[2];
-            if(null != bitmap) {
+            if(null != bitmap && isValidPosition(RESIZE_WITH_BOTTOM_RIGHT)) {
                 canvas.drawBitmap(bitmap, canvasW - bitmap.getWidth(), canvasH - bitmap.getHeight(), paint);
             }
         }
@@ -523,18 +519,27 @@ public class FloatWindow {
             if(null != anchorBitmaps){
                 drawResizeAnchorBitmaps(canvas, paint, anchorBitmaps, canvasW, canvasH);
             }else{
-                final int lineLength = mResizeTriggerSize / 2;
-                canvas.drawLine(0, 0, lineLength, 0, paint);
-                canvas.drawLine(0, 0, 0, lineLength, paint);
+                final int lineWidth = anchorShowWidth;
+                final int lineHeight = anchorShowHeight;
+                if(isValidPosition(RESIZE_WITH_TOP_LEFT)) {
+                    canvas.drawLine(0, 0, lineWidth, 0, paint);
+                    canvas.drawLine(0, 0, 0, lineHeight, paint);
+                }
 
-                canvas.drawLine(canvasW - lineLength, 0, canvasW, 0, paint);
-                canvas.drawLine(canvasW, 0, canvasW, lineLength, paint);
+                if(isValidPosition(RESIZE_WITH_TOP_RIGHT)) {
+                    canvas.drawLine(canvasW - lineWidth, 0, canvasW, 0, paint);
+                    canvas.drawLine(canvasW, 0, canvasW, lineHeight, paint);
+                }
 
-                canvas.drawLine(0, canvasH, lineLength, canvasH, paint);
-                canvas.drawLine(0, canvasH - lineLength, 0, canvasH, paint);
+                if(isValidPosition(RESIZE_WITH_BOTTOM_LEFT)) {
+                    canvas.drawLine(0, canvasH, lineWidth, canvasH, paint);
+                    canvas.drawLine(0, canvasH - lineHeight, 0, canvasH, paint);
+                }
 
-                canvas.drawLine(canvasW - lineLength, canvasH, canvasW, canvasH, paint);
-                canvas.drawLine(canvasW, canvasH - lineLength, canvasW, canvasH, paint);
+                if(isValidPosition(RESIZE_WITH_BOTTOM_RIGHT)) {
+                    canvas.drawLine(canvasW - lineWidth, canvasH, canvasW, canvasH, paint);
+                    canvas.drawLine(canvasW, canvasH - lineHeight, canvasW, canvasH, paint);
+                }
             }
         }
 
@@ -579,8 +584,9 @@ public class FloatWindow {
 
             getContentRootView().setX(size.left);
             getContentRootView().setY(size.top);
-            getContentRootView().setAlpha(0);
 
+            // Evade twinkle
+            getContentRootView().setAlpha(0);
             post(() -> {
                 updateWindow();
                 getContentRootView().animate().alpha(1).setDuration(230).start();
@@ -620,8 +626,9 @@ public class FloatWindow {
 
             getContentRootView().setX(0);
             getContentRootView().setY(0);
-            getContentRootView().setAlpha(0);
 
+            // Evade twinkle
+            getContentRootView().setAlpha(0);
             post(() -> {
                 updateWindow();
                 getContentRootView().animate().alpha(1).setDuration(230).start();
@@ -670,19 +677,58 @@ public class FloatWindow {
         }
 
         private int judgeResizeMode(final float downX, final float downY){
+            int position = judgeResizePosition(downX, downY);
+            if(isValidPosition(position)){
+                return position;
+            }
+            return 0;
+        }
+
+        private Bitmap getAnchorBitmap(int pos){
+            if(null != anchorBitmaps && pos >= 0 && pos < anchorBitmaps.length){
+                return anchorBitmaps[pos];
+            }
+            return null;
+        }
+
+        private int judgeResizePosition(final float downX, final float downY){
             final int width = getContentRootView().getWidth();
             final int height = getContentRootView().getHeight();
-            final int touchSizeW = anchorTouchWidth;
-            final int touchSizeH = anchorTouchHeight;
 
+            int touchSizeW = anchorTouchWidth;
+            int touchSizeH = anchorTouchHeight;
+
+            Bitmap bitmap = getAnchorBitmap(0);
+            if (null != bitmap) {
+                touchSizeW = bitmap.getWidth();
+                touchSizeH = bitmap.getHeight();
+            }
             if(downX >= 0 && downX < touchSizeW && downY >= 0 && downY < touchSizeH){
                 return RESIZE_WITH_TOP_LEFT;
+            }
+
+            bitmap = getAnchorBitmap(1);
+            if (null != bitmap) {
+                touchSizeW = bitmap.getWidth();
+                touchSizeH = bitmap.getHeight();
             }
             if(downX > width - touchSizeW && downX <= width && downY >= 0 && downY < touchSizeH){
                 return RESIZE_WITH_TOP_RIGHT;
             }
+
+            bitmap = getAnchorBitmap(3);
+            if (null != bitmap) {
+                touchSizeW = bitmap.getWidth();
+                touchSizeH = bitmap.getHeight();
+            }
             if(downX >= 0 && downX < touchSizeW && downY > height - touchSizeH && downY <= height){
                 return RESIZE_WITH_BOTTOM_LEFT;
+            }
+
+            bitmap = getAnchorBitmap(2);
+            if (null != bitmap) {
+                touchSizeW = bitmap.getWidth();
+                touchSizeH = bitmap.getHeight();
             }
             if(downX > width - touchSizeW && downX <= width && downY > height - touchSizeH && downY <= height){
                 return RESIZE_WITH_BOTTOM_RIGHT;
@@ -751,11 +797,11 @@ public class FloatWindow {
                 return true;
             }
 
-            if(!mEnableDrag){
+            if(!enableDrag){
                 return super.dispatchTouchEvent(event);
             }
 
-            switch(mDragStyle){
+            switch(dragStyle){
                 case DRAG_STYLE_SIMPLE_DRAG:
                     if(handleTouchEventInSimpleDragStyle(event)){
                         return true;
@@ -800,7 +846,7 @@ public class FloatWindow {
         }
 
         private boolean handleActionMove(MotionEvent event){
-            if(!mEnableDrag){
+            if(!enableDrag){
                 return false;
             }
 
