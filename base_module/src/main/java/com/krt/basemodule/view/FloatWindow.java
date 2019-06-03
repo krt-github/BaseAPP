@@ -406,6 +406,7 @@ public class FloatWindow {
             if(anchorDrawOnTop) {
                 addAnchorFrame(context);
             }
+            setEnableResize(enableResize);
         }
 
         private void addAnchorFrame(Context context){
@@ -825,16 +826,30 @@ public class FloatWindow {
             removeCallbacks(checkLongPressRunnable);
         }
 
+        private boolean needInterceptTouchEvent(){
+            return enableResize;
+        }
+
+        private void clearIntercept(){
+            setEnableResize(false);
+        }
+
         @Override
         public boolean dispatchTouchEvent(MotionEvent event) {
             if(enableResize && handleResizeTouchEvent(event)){
                 return true;
             }
 
-            if(!enableDrag){
-                return super.dispatchTouchEvent(event);
-            }
+            return super.dispatchTouchEvent(event);
+        }
 
+        @Override
+        public boolean onInterceptTouchEvent(MotionEvent ev) {
+            return needInterceptTouchEvent() || super.onInterceptTouchEvent(ev);
+        }
+
+        @Override
+        public boolean onTouchEvent(MotionEvent event) {
             switch(dragStyle){
                 case DRAG_STYLE_SIMPLE_DRAG:
                     if(handleTouchEventInSimpleDragStyle(event)){
@@ -852,8 +867,7 @@ public class FloatWindow {
                     }
                     break;
             }
-            super.dispatchTouchEvent(event);
-            return true;
+            return super.onTouchEvent(event);
         }
 
         private boolean handleActionDown(MotionEvent event){
@@ -865,7 +879,7 @@ public class FloatWindow {
             downY = event.getRawY();
             lastX = downX;
             lastY = downY;
-            return false;
+            return true;
         }
 
         private boolean handleActionUp(MotionEvent event){
@@ -874,9 +888,12 @@ public class FloatWindow {
                     autoSettle();
                 }
                 return true;
-            }else {
-                return false;
+            }else if(isLongPress) {
+                return true;
+            }else{
+                clearIntercept();
             }
+            return false;
         }
 
         private boolean handleActionMove(MotionEvent event){
