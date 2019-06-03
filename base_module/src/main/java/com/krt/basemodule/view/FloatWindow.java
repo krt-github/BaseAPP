@@ -804,21 +804,29 @@ public class FloatWindow {
                 return false;
             }
 
-            float tempX = event.getRawX();
-            float tempY = event.getRawY();
-            mLayoutParams.x += (int)(tempX - lastX);
-            mLayoutParams.y += (int)(tempY - lastY);
-
+            final float tempX = event.getRawX();
+            final float tempY = event.getRawY();
+            final float offsetX = (int)(tempX - lastX);
+            final float offsetY = (int)(tempY - lastY);
             lastX = tempX;
             lastY = tempY;
 
-            reviseLayoutParams(mFloatView, mLayoutParams, mSize);
-            updateWindow();
-            if(!isDrag && (Math.abs(lastX - downX) >= TOUCH_SLOP
-                    || Math.abs(lastY - downY) >= TOUCH_SLOP)){
+            if(!isDrag && isMoveOverThreshold(lastX, lastY)){
                 isDrag = true;
             }
+
+            if(isDrag){
+                mLayoutParams.x += offsetX;
+                mLayoutParams.y += offsetY;
+                reviseLayoutParams(mFloatView, mLayoutParams, mSize);
+                updateWindow();
+            }
+
             return true;
+        }
+
+        private boolean isMoveOverThreshold(final float curX, final float curY){
+            return Math.abs(curX - downX) >= TOUCH_SLOP || Math.abs(curY - downY) >= TOUCH_SLOP;
         }
 
         private boolean handleTouchEventInSimpleDragStyle(MotionEvent event){
@@ -865,9 +873,13 @@ public class FloatWindow {
                     break;
 
                 case MotionEvent.ACTION_MOVE:
-                    removeCheckLongPressTask();
-                    if(isLongPress && handleActionMove(event)){
-                        return true;
+                    if(!isDrag && isMoveOverThreshold(event.getRawX(), event.getRawY())){
+                        isDrag = true;
+                        removeCheckLongPressTask();
+                    }
+
+                    if(isLongPress){
+                        return handleActionMove(event);
                     }
                     break;
             }
