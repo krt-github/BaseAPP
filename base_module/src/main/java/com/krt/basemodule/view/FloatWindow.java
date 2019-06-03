@@ -113,11 +113,15 @@ public class FloatWindow {
     }
 
     public FloatWindow(Context context){
+        this(context, true);
+    }
+
+    public FloatWindow(Context context, boolean anchorDrawOnTop){
         DENSITY = context.getResources().getDisplayMetrics().density;
         TOUCH_SLOP = ViewConfiguration.get(context).getScaledTouchSlop();
         mSettleMargin = TOUCH_SLOP;
 
-        mContentRootView = new RootViewGroup(context);
+        mContentRootView = new RootViewGroup(context, anchorDrawOnTop);
         mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display defaultDisplay = mWindowManager.getDefaultDisplay();
         defaultDisplay.getSize(mSize);
@@ -206,6 +210,10 @@ public class FloatWindow {
 
     public void setResizeAnchorSize(int widthDP, int heightDP){
         mContentRootView.setAnchorSize(dp2px(widthDP), dp2px(heightDP));
+    }
+
+    public View getResizeAnchorView(){
+        return mContentRootView.getAnchorFrameView();
     }
 
     public void setResizeFrameStrokeWidth(int widthDP){
@@ -375,7 +383,14 @@ public class FloatWindow {
         private int minHeight;
         private final Rect newSizeAfterDrag = new Rect();
 
+        private final boolean anchorDrawOnTop;
+        private View anchorFrameView;
+
         public RootViewGroup(@NonNull Context context) {
+            this(context, false);
+        }
+
+        public RootViewGroup(@NonNull Context context, boolean anchorDrawOnTop) {
             super(context);
             anchorPaint.setColor(getResources().getColor(R.color.colorPrimary));
             anchorPaint.setStrokeWidth(dp2px(10));
@@ -386,11 +401,26 @@ public class FloatWindow {
             anchorShowHeight = anchorTouchWidth / 2;
 
             initMinSize();
+
+            this.anchorDrawOnTop = anchorDrawOnTop;
+            if(anchorDrawOnTop) {
+                addAnchorFrame(context);
+            }
+        }
+
+        private void addAnchorFrame(Context context){
+            anchorFrameView = new AnchorFrameView(context);
+            anchorFrameView.setZ(1);
+            addView(anchorFrameView);
         }
 
         private void initMinSize(){
             minWidth = anchorShowWidth;
             minHeight = anchorShowHeight;
+        }
+
+        public View getAnchorFrameView(){
+            return anchorDrawOnTop ? anchorFrameView : this;
         }
 
         public void setAnchorSize(int showWidth, int showHeight) {
@@ -413,7 +443,11 @@ public class FloatWindow {
 
         public void setEnableResize(boolean enable){
             enableResize = enable;
-            setWillNotDraw(!enable);
+            if(anchorDrawOnTop) {
+                anchorFrameView.setVisibility(enable ? View.VISIBLE : View.INVISIBLE);
+            }else{
+                setWillNotDraw(!enable);
+            }
         }
 
         public void setEnableDrag(boolean canDrag){
@@ -421,7 +455,7 @@ public class FloatWindow {
         }
 
         public void setDragStyle(@DragStyle int dragStyle){
-            dragStyle = dragStyle;
+            this.dragStyle = dragStyle;
         }
 
         private Bitmap decodeBitmap(@DrawableRes int resId){
@@ -547,7 +581,7 @@ public class FloatWindow {
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
 
-            if(enableResize){
+            if(enableResize && !anchorDrawOnTop){
                 drawResizeAnchors(canvas, anchorPaint);
             }
         }
@@ -947,6 +981,21 @@ public class FloatWindow {
                 isLongPress = true;
                 if(null != onLongPressListener){
                     onLongPressListener.onLongPress();
+                }
+            }
+        }
+
+        private class AnchorFrameView extends View{
+
+            public AnchorFrameView(Context context) {
+                super(context);
+            }
+
+            @Override
+            protected void onDraw(Canvas canvas) {
+                super.onDraw(canvas);
+                if(enableResize){
+                    drawResizeAnchors(canvas, anchorPaint);
                 }
             }
         }
