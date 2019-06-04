@@ -40,7 +40,6 @@ import java.lang.annotation.RetentionPolicy;
 public class FloatWindow {
     public static final int DRAG_STYLE_SIMPLE_DRAG = 1;
     public static final int DRAG_STYLE_LONG_PRESS = 2;
-    public static final int DRAG_STYLE_DOUBLE_CLICK = 3;
 
     public static final int RESIZE_WITH_TOP_LEFT = 0x01;
     public static final int RESIZE_WITH_TOP_RIGHT = 0x02;
@@ -51,7 +50,6 @@ public class FloatWindow {
     @IntDef(value = {
             DRAG_STYLE_SIMPLE_DRAG,
             DRAG_STYLE_LONG_PRESS,
-            DRAG_STYLE_DOUBLE_CLICK
     })
     @Retention(value = RetentionPolicy.SOURCE)
     public @interface DragStyle{}
@@ -850,22 +848,19 @@ public class FloatWindow {
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
-            switch(dragStyle){
-                case DRAG_STYLE_SIMPLE_DRAG:
-                    if(handleTouchEventInSimpleDragStyle(event)){
-                        return true;
-                    }
-                    break;
-                case DRAG_STYLE_LONG_PRESS:
-                    if(handleTouchEventInLongPressStyle(event)){
-                        return true;
-                    }
-                    break;
-                case DRAG_STYLE_DOUBLE_CLICK:
-                    if(handleTouchEventInDoubleClickStyle(event)){
-                        return true;
-                    }
-                    break;
+            if(enableDrag) {
+                switch (dragStyle) {
+                    case DRAG_STYLE_SIMPLE_DRAG:
+                        if(handleTouchEventInSimpleDragStyle(event)){
+                            return true;
+                        }
+                        break;
+                    case DRAG_STYLE_LONG_PRESS:
+                        if (handleTouchEventInLongPressStyle(event)) {
+                            return true;
+                        }
+                        break;
+                }
             }
             return super.onTouchEvent(event);
         }
@@ -981,10 +976,6 @@ public class FloatWindow {
                     break;
             }
             return false;
-        }
-
-        private boolean handleTouchEventInDoubleClickStyle(MotionEvent event){
-            return super.dispatchTouchEvent(event);
         }
 
         private OnLongPressListener onLongPressListener;
