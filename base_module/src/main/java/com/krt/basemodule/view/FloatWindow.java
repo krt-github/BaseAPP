@@ -39,7 +39,8 @@ import java.lang.annotation.RetentionPolicy;
 
 public class FloatWindow {
     public static final int DRAG_STYLE_SIMPLE_DRAG = 1;
-    public static final int DRAG_STYLE_LONG_PRESS = 2;
+    public static final int DRAG_STYLE_PRIOR_DRAG = 2;
+    public static final int DRAG_STYLE_LONG_PRESS = 3;
 
     public static final int RESIZE_WITH_TOP_LEFT = 0x01;
     public static final int RESIZE_WITH_TOP_RIGHT = 0x02;
@@ -49,6 +50,7 @@ public class FloatWindow {
 
     @IntDef(value = {
             DRAG_STYLE_SIMPLE_DRAG,
+            DRAG_STYLE_PRIOR_DRAG,
             DRAG_STYLE_LONG_PRESS,
     })
     @Retention(value = RetentionPolicy.SOURCE)
@@ -832,9 +834,92 @@ public class FloatWindow {
             setEnableResize(false);
         }
 
+        private boolean isPriorDrag(){
+            return enableDrag && DRAG_STYLE_PRIOR_DRAG == dragStyle;
+        }
+
+        private boolean needDispatch = false;
+        private final Runnable judgeDispatchRunnable = new Runnable() {
+            public void run() {
+                // It means motion event need dispatch to sub views,
+                // in simple drag mode, RootViewGroup will eat down action,
+                // so need manual dispatch action down.
+                needDispatch = true;
+                manualDispatchActionDown();
+            }
+        };
+
+        private MotionEvent actionDownMotionEvent;
+        private void startTask4JudgeDispatch(MotionEvent event){
+            needDispatch = false;
+            // Copy current action down event, for manual dispatch if need.
+            actionDownMotionEvent = MotionEvent.obtain(event);
+            postDelayed(judgeDispatchRunnable, 300);
+        }
+
+        private void removeJudgeTask(){
+//            checkCompleted = false;
+            removeCallbacks(judgeDispatchRunnable);
+        }
+
+        private void manualDispatchActionDown(){
+            if(null != actionDownMotionEvent){
+                super.dispatchTouchEvent(actionDownMotionEvent);
+                actionDownMotionEvent.recycle();
+            }
+        }
+
+        private boolean priorDragCompatClickEvent(MotionEvent event){
+            switch(event.getAction()){
+                case MotionEvent.ACTION_DOWN:
+                    if(handleActionDown(event)){
+                        // Post a delay task, it will check touch gesture after some times(300ms),
+                        // if occurred drag, the RootViewGroup will consume all motion event,
+                        // otherwise dispatch all motion event after manual dispatch action down.
+                        startTask4JudgeDispatch(event);
+                        return true;
+                    }
+                    break;
+
+                case MotionEvent.ACTION_CANCEL:
+                case MotionEvent.ACTION_UP:
+                    removeJudgeTask();
+                    handleActionUp(event);
+                    if(isDrag){
+                        // RootViewGroup will consume all motion event when occurred drag.
+                        return true;
+                    }else{
+                        // In this case(no drag):
+                        // If needDispatch is true, that means current gesture is long press(long click),
+                        // action down event has dispatched in judgeDispatchRunnable.
+                        // If needDispatch is false, that means current gesture is short press(click),
+                        // need manual dispatch action down.
+                        if(!needDispatch){
+                            manualDispatchActionDown();
+                        }
+                    }
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    if(isDrag){
+                        // RootViewGroup handle touch event.
+                        removeJudgeTask();
+                    }else if(needDispatch){
+                        // Subviews handle touch event.
+                        return super.dispatchTouchEvent(event);
+                    }
+                    return handleActionMove(event);
+            }
+            return super.dispatchTouchEvent(event);
+        }
+
         @Override
         public boolean dispatchTouchEvent(MotionEvent event) {
             if(enableResize && handleResizeTouchEvent(event)){
+                return true;
+            }
+
+            if(isPriorDrag() && priorDragCompatClickEvent(event)){
                 return true;
             }
 
@@ -842,8 +927,8 @@ public class FloatWindow {
         }
 
         @Override
-        public boolean onInterceptTouchEvent(MotionEvent ev) {
-            return needInterceptTouchEvent() || super.onInterceptTouchEvent(ev);
+        public boolean onInterceptTouchEvent(MotionEvent event) {
+            return needInterceptTouchEvent() || super.onInterceptTouchEvent(event);
         }
 
         @Override
