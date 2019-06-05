@@ -184,6 +184,14 @@ public class FloatWindow {
         mContentRootView.setEnableDrag(canDrag);
     }
 
+    public boolean isEnableDrag(){
+        return mContentRootView.isEnableDrag();
+    }
+
+    public boolean isEnableResize(){
+        return mContentRootView.isEnableResize();
+    }
+
     public void setKeepRatio(boolean keep){
         mContentRootView.setKeepRatio(keep);
     }
@@ -462,6 +470,14 @@ public class FloatWindow {
 
         public void setEnableDrag(boolean canDrag){
             enableDrag = canDrag;
+        }
+
+        public boolean isEnableDrag(){
+            return enableDrag;
+        }
+
+        public boolean isEnableResize(){
+            return enableResize;
         }
 
         public void setDragStyle(@DragStyle int dragStyle){
@@ -853,7 +869,7 @@ public class FloatWindow {
         }
 
         private boolean needInterceptTouchEvent(){
-            return enableResize;
+            return enableResize && enableDrag;
         }
 
         private void clearIntercept(){
@@ -861,7 +877,7 @@ public class FloatWindow {
         }
 
         private boolean isPriorDrag(){
-            return enableDrag && DRAG_STYLE_PRIOR_DRAG == dragStyle;
+            return /*!enableResize && */enableDrag && DRAG_STYLE_PRIOR_DRAG == dragStyle;
         }
 
         private boolean needDispatch = false;
@@ -892,6 +908,7 @@ public class FloatWindow {
             if(null != actionDownMotionEvent){
                 super.dispatchTouchEvent(actionDownMotionEvent);
                 actionDownMotionEvent.recycle();
+                actionDownMotionEvent = null;
             }
         }
 
@@ -899,10 +916,12 @@ public class FloatWindow {
             switch(event.getAction()){
                 case MotionEvent.ACTION_DOWN:
                     if(handleActionDown(event)){
-                        // Post a delay task, it will check touch gesture after some times(300ms),
-                        // if occurred drag, the RootViewGroup will consume all motion event,
-                        // otherwise dispatch all motion event after manual dispatch action down.
-                        startTask4JudgeDispatch(event);
+                        if(!enableResize) {
+                            // Post a delay task, it will check touch gesture after some times(300ms),
+                            // if occurred drag, the RootViewGroup will consume all motion event,
+                            // otherwise dispatch all motion event after manual dispatch action down.
+                            startTask4JudgeDispatch(event);
+                        }
                         return true;
                     }
                     break;
@@ -911,8 +930,8 @@ public class FloatWindow {
                 case MotionEvent.ACTION_UP:
                     removeJudgeTask();
                     handleActionUp(event);
-                    if(isDrag){
-                        // RootViewGroup will consume all motion event when occurred drag.
+                    if(isDrag || enableResize){
+                        // RootViewGroup will consume all motion event when occurred drag or resize.
                         return true;
                     }else{
                         // In this case(no drag):
@@ -927,7 +946,7 @@ public class FloatWindow {
                     break;
 
                 case MotionEvent.ACTION_MOVE:
-                    if(isDrag){
+                    if(isDrag || enableResize){
                         // RootViewGroup handle touch event.
                         removeJudgeTask();
                     }else if(needDispatch){
