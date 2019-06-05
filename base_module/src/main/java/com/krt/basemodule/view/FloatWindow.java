@@ -184,6 +184,10 @@ public class FloatWindow {
         mContentRootView.setEnableDrag(canDrag);
     }
 
+    public void setKeepRatio(boolean keep){
+        mContentRootView.setKeepRatio(keep);
+    }
+
     public void setResizeMode(int mode){
         mContentRootView.setResizeMode(mode);
     }
@@ -372,6 +376,7 @@ public class FloatWindow {
         private static final int LONG_PRESS_THRESHOLD = 500; //ms
 
         private boolean enableResize = false;
+        private boolean keepRatio = false;
         private int resizeMode = RESIZE_WITH_ALL;
         private final Paint anchorPaint = new Paint();
         private Bitmap[] anchorBitmaps;
@@ -449,6 +454,10 @@ public class FloatWindow {
             }else{
                 setWillNotDraw(!enable);
             }
+        }
+
+        public void setKeepRatio(boolean keep){
+            keepRatio = keep;
         }
 
         public void setEnableDrag(boolean canDrag){
@@ -628,7 +637,24 @@ public class FloatWindow {
             });
         }
 
-        private void calcSize(final Rect size, int mode, final float offsetX, final float offsetY){
+        private int reviseSign(int mode){
+            return (RESIZE_WITH_TOP_RIGHT == mode || RESIZE_WITH_BOTTOM_LEFT == mode) ? -1 : 1;
+        }
+
+        private float getRatio(){
+            return 1;
+        }
+
+        private void calcSize(final Rect size, int mode, float offsetX, float offsetY){
+            if(keepRatio){
+                final float ratio = getRatio();
+                if(Math.abs(offsetX) > Math.abs(offsetY)){
+                    offsetY = offsetX / ratio * reviseSign(mode);
+                }else{
+                    offsetX = offsetY * ratio * reviseSign(mode);
+                }
+            }
+
             switch(mode){
                 case RESIZE_WITH_TOP_LEFT:
                     size.left += offsetX;
