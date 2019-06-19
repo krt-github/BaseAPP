@@ -1,13 +1,14 @@
 package com.krt.http_retrofit;
 
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Action;
+import io.reactivex.observers.DisposableObserver;
 
 /**
  * @author KRT
  * 2018/11/22
  */
-public abstract class DefaultObserverCallback2<T, E> implements IObserverCallback<T, E> {
+public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<T>
+                                                    implements IObserverCallback<T, E> {
     private E convertedResponse;
     private boolean disposedByUser = false;
 
@@ -21,12 +22,12 @@ public abstract class DefaultObserverCallback2<T, E> implements IObserverCallbac
         return null;
     }
 
-    @Override
-    public final void onSubscribe(Disposable d) {
-        onStart(d);
-    }
-
-    public void onStart(Disposable disposable){}
+//    @Override
+//    public final void onSubscribe(Disposable d) {
+//        onStart(d);
+//    }
+//
+//    public void onStart(Disposable disposable){}
 
     /**
      * Function<T, T>, map data, work on background thread
