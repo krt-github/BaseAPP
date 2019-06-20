@@ -27,7 +27,7 @@ public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<
 //        onStart(d);
 //    }
 //
-//    public void onStart(Disposable disposable){}
+//    protected void onStart(Disposable disposable){}
 
     /**
      * Function<T, T>, map data, work on background thread
@@ -41,7 +41,7 @@ public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<
         return t;
     }
 
-    public E doResponseInBackground(T response){
+    protected E doResponseInBackground(T response){
         return null;
     }
 
@@ -59,7 +59,7 @@ public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<
         }
     }
 
-    public abstract void onResponse(T response, E convertedResponse);
+    protected abstract void onResponse(T response, E convertedResponse);
 
     /**
      * Consumer<Throwable> doOnError, work on background thread
@@ -75,7 +75,7 @@ public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<
      * NOTICE: This method maybe called more than once when retry strategy run.
      * @param throwable
      */
-    public void doErrorInBackground(Throwable throwable){}
+    protected void doErrorInBackground(Throwable throwable){}
 
     @Override
     public abstract void onError(Throwable e);
@@ -101,11 +101,11 @@ public abstract class DefaultObserverCallback2<T, E> extends DisposableObserver<
         onFinally();
     }
 
-    public final void onFinally(){
+    private void onFinally(){
         onFinally(disposedByUser);
         convertedResponse = null;
     }
 
-    public void onFinally(boolean isCancelByUser){}
+    protected void onFinally(boolean isCancelByUser){}
 
 }
