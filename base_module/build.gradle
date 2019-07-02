@@ -34,6 +34,7 @@ dependencies {
     implementation 'com.android.support:design:28.0.0'
 
     api project(':http_retrofit')
+    api project(':file_upload_download')
 
     //Glide
     api 'com.github.bumptech.glide:glide:3.7.0'
