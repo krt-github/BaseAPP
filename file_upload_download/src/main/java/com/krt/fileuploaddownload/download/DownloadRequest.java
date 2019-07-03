@@ -1,4 +1,4 @@
-package com.krt.fileuploaddownload;
+package com.krt.fileuploaddownload.download;
 
 public class DownloadRequest {
     public String downloadUrl;

@@ -1,4 +1,4 @@
-package com.krt.fileuploaddownload;
+package com.krt.fileuploaddownload.download;
 
 import android.Manifest;
 import android.support.annotation.RequiresPermission;

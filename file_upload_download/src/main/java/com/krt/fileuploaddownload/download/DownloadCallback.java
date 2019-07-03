@@ -1,4 +1,4 @@
-package com.krt.fileuploaddownload;
+package com.krt.fileuploaddownload.download;
 
 import com.liulishuo.okdownload.DownloadTask;
 import com.liulishuo.okdownload.core.cause.ResumeFailedCause;

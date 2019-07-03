@@ -1,6 +1,5 @@
-package com.krt.fileuploaddownload;
+package com.krt.fileuploaddownload.download;
 
-import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.SparseArray;
