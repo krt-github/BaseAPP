@@ -22,14 +22,16 @@ android {
 
 ext {
     okhttp_version = '3.10.0'
-    okdownload_version = "1.0.5"
+    okdownload_version = '1.0.5'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:appcompat-v7:28.0.0'
 
-    // core
+    api "com.squareup.okhttp3:okhttp:${okhttp_version}"
+
+    // okdownload core
     api "com.liulishuo.okdownload:okdownload:${okdownload_version}"
     // provide sqlite to store breakpoints
     api "com.liulishuo.okdownload:sqlite:${okdownload_version}"
@@ -37,5 +39,4 @@ dependencies {
     // and then please import okhttp dependencies by yourself
     api "com.liulishuo.okdownload:okhttp:${okdownload_version}"
 
-    api "com.squareup.okhttp3:okhttp:${okhttp_version}"
 }

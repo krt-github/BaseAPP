@@ -140,8 +140,8 @@ class DownloadCallbackWrapper extends DownloadListener3 {
     }
 
     private void onFinally(DownloadTask task){
-        dispatchCallbackCmd(CALLBACK_CMD_FINALLY, task);
         mDownloadCallbackList.clear();
+        dispatchCallbackCmd(CALLBACK_CMD_FINALLY, task);
     }
 
     private void dispatchCallbackCmd(int cmd, DownloadTask task){
