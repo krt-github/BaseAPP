@@ -2,33 +2,33 @@ package com.krt.fileuploaddownload.upload;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import okhttp3.Call;
-import okhttp3.Response;
 
 class UploadCallbackWrapper extends AbsUploadCallback{
     private static Map<String, UploadCallbackWrapper> mTaskList = new HashMap<>();
 
     private static String getTaskId(UploadRequest request){
+        final String separator = "#";
         StringBuilder stringBuilder = new StringBuilder(request.serverUrl);
+        stringBuilder.append(separator);
         Iterator<Map.Entry<String, Object>> iterator = request.getFormData().entrySet().iterator();
         Map.Entry<String, Object> next;
         while(iterator.hasNext()){
             next = iterator.next();
             Object value = next.getValue();
 
-            stringBuilder.append(next.getKey());
+            stringBuilder.append(next.getKey()).append("=");
             if(value instanceof String){
-                stringBuilder.append(value);
+                stringBuilder.append(value).append(separator);
             }else if(value instanceof File){
-                stringBuilder.append(((File) value).getName());
+                stringBuilder.append(((File) value).getAbsolutePath()).append(separator);
             }
         }
         return stringBuilder.toString();
@@ -37,7 +37,6 @@ class UploadCallbackWrapper extends AbsUploadCallback{
     static UploadCallbackWrapper getCallbackWrapper(UploadRequest request){
         UploadCallbackWrapper callbackWrapper;
         String taskId = getTaskId(request);
-        request.callback.taskId = taskId;
 
         print("---Upload task id: " + taskId);
         UploadCallbackWrapper uploadCallbackWrapper = mTaskList.get(taskId);
@@ -48,7 +47,7 @@ class UploadCallbackWrapper extends AbsUploadCallback{
             return uploadCallbackWrapper;
         }
         print("Upload task is not exist.");
-        callbackWrapper = new UploadCallbackWrapper(request.callback);
+        callbackWrapper = new UploadCallbackWrapper(taskId, request.callback);
         mTaskList.put(taskId, callbackWrapper);
         return callbackWrapper;
     }
@@ -61,13 +60,39 @@ class UploadCallbackWrapper extends AbsUploadCallback{
         }
     }
 
-    private static void clearTask(List<String> taskIds){
-        if(null == taskIds || taskIds.size() <= 0){
+    static void cancelTask(Call call){
+        if(null == call){
             return;
         }
-        for(String taskId : taskIds){
-            mTaskList.remove(taskId);
+
+        Collection<UploadCallbackWrapper> values = mTaskList.values();
+        for(UploadCallbackWrapper value : values){
+            if(value.isSameCall(call)){
+                cancelTask(value.mTaskId);
+                break;
+            }
         }
+    }
+
+    static void cancelTask(UploadRequest request){
+        if(null == request){
+            return;
+        }
+        cancelTask(getTaskId(request));
+    }
+
+    static void cancelTask(String taskId){
+        UploadCallbackWrapper callbackWrapper = clearTask(taskId);
+        if(null != callbackWrapper){
+            callbackWrapper.cancel();
+        }
+    }
+
+    private static UploadCallbackWrapper clearTask(String taskId){
+        if(null == taskId || taskId.length() <= 0){
+            return null;
+        }
+        return mTaskList.remove(taskId);
     }
 
     private static final int CALLBACK_CMD_START = 1;
@@ -78,26 +103,42 @@ class UploadCallbackWrapper extends AbsUploadCallback{
     private static final int CALLBACK_CMD_FINALLY = 9;
     private static final int CALLBACK_CMD_PROGRESS_END = 10;
 
+    private String mTaskId;
+    private Call mCall;
     private final Set<AbsUploadCallback> mUploadCallbackList = new HashSet<>();
-    private UploadCallbackWrapper(AbsUploadCallback uploadCallback){
+    private UploadCallbackWrapper(String taskId, AbsUploadCallback uploadCallback){
+        mTaskId = taskId;
         addCallback(uploadCallback);
     }
 
-    public void addCallback(AbsUploadCallback uploadCallback){
+    private void addCallback(AbsUploadCallback uploadCallback){
         mUploadCallbackList.add(uploadCallback);
     }
 
-    public void removeCallback(AbsUploadCallback uploadCallback){
+    private void removeCallback(AbsUploadCallback uploadCallback){
         mUploadCallbackList.remove(uploadCallback);
     }
 
-    public void clearCallback(){
+    private void clearCallback(){
         mUploadCallbackList.clear();
     }
 
-    @Override
-    protected String getPercent(long currentPosition, long totalLength) {
-        return super.getPercent(currentPosition, totalLength);
+    void recordTask(Call call){
+        mCall = call;
+    }
+
+    public Call getCall(){
+        return mCall;
+    }
+
+    private boolean isSameCall(Call call){
+        return mCall == call;
+    }
+
+    private void cancel(){
+        if(null != mCall){
+            mCall.cancel();
+        }
     }
 
     @Override
@@ -128,12 +169,14 @@ class UploadCallbackWrapper extends AbsUploadCallback{
         ParameterBean parameterBean = new ParameterBean();
         parameterBean.call = call;
         parameterBean.object_1 = e;
-        dispatchCallbackCmd(CALLBACK_CMD_ERROR, parameterBean);
+
+        int cmd = "Socket closed".equals(e.getMessage()) ? CALLBACK_CMD_CANCEL : CALLBACK_CMD_ERROR;
+        dispatchCallbackCmd(cmd, parameterBean);
         onFinally(call, null, e);
     }
 
     @Override
-    public void onResponse(Call call, Response response) throws IOException {
+    public void onResponse(Call call, UploadResponse response) {
         ParameterBean parameterBean = new ParameterBean();
         parameterBean.call = call;
         parameterBean.object_1 = response;
@@ -141,7 +184,7 @@ class UploadCallbackWrapper extends AbsUploadCallback{
         onFinally(call, response, null);
     }
 
-    private void onFinally(Call call, Response response, Exception e) {
+    private void onFinally(Call call, UploadResponse response, Exception e) {
         printe("===UploadTaskEnd -> : " + call.toString());
         if(null != response){
             print(response.toString());
@@ -151,13 +194,10 @@ class UploadCallbackWrapper extends AbsUploadCallback{
             e.printStackTrace();
         }
 
-        List<String> taskIds = new ArrayList<>();
-        for(AbsUploadCallback callback : mUploadCallbackList){
-            taskIds.add(callback.taskId);
-        }
-        clearTask(taskIds);
-        clearCallback();
         dispatchCallbackCmd(CALLBACK_CMD_FINALLY);
+        clearTask(mTaskId);
+        clearCallback();
+        mCall = null;
     }
 
     private void dispatchCallbackCmd(int cmd){
@@ -175,7 +215,7 @@ class UploadCallbackWrapper extends AbsUploadCallback{
         Call call = parameterBean.call;
         AbsUploadCallback uploadCallback = parameterBean.callback;
         if(null == uploadCallback){
-            printe("---ERROR -> call: " + call + "  callback: " + uploadCallback);
+            printe("---ERROR -> call: " + call);
             return;
         }
 
@@ -200,7 +240,7 @@ class UploadCallbackWrapper extends AbsUploadCallback{
             case CALLBACK_CMD_COMPLETE:
                 cmdString = "Complete";
                 try {
-                    uploadCallback.onResponse(parameterBean.call, (Response) parameterBean.object_1);
+                    uploadCallback.onResponse(parameterBean.call, (UploadResponse) parameterBean.object_1);
                 } catch (Exception e) {
                     printe("---ERROR -> response handle error");
                     e.printStackTrace();
@@ -241,6 +281,5 @@ class UploadCallbackWrapper extends AbsUploadCallback{
         float float_2;
 
         Object object_1;
-
     }
 }

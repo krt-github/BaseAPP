@@ -11,7 +11,7 @@ public abstract class ProgressListener implements ProgressCallback {
     private boolean started;
     private long lastRefreshTime = 0L;
     private long lastBytesWritten = 0L;
-    private int minTime = 100;//最小回调时间100ms，避免频繁回调
+    private int minTime = 500; //最小回调时间500ms，避免频繁回调
 
     public final void setMinIntervalCallback(int interval){
         if(interval < 100){
@@ -19,6 +19,10 @@ public abstract class ProgressListener implements ProgressCallback {
         }else{
             minTime = interval;
         }
+    }
+
+    public int getMinIntervalTime(){
+        return minTime;
     }
 
     /**

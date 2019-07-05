@@ -10,8 +10,7 @@ public class UploadRequest {
     public AbsUploadCallback callback;
     public boolean needProgress = true;
     public boolean syncRequest = false;
-    public boolean taskIsExist = false;
-    public String taskId = "";
+    boolean taskIsExist = false;
 
     public UploadRequest addFormData(String formName, String formValue){
         formData.put(formName, formValue);

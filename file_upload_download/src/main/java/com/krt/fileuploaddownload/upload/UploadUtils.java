@@ -78,6 +78,14 @@ public class UploadUtils {
         }
     }
 
+    public static void cancel(String taskId){
+        UploadCallbackWrapper.cancelTask(taskId);
+    }
+
+    public static void cancel(UploadRequest uploadRequest){
+        UploadCallbackWrapper.cancelTask(uploadRequest);
+    }
+
     public static void pause(UploadTask uploadTask){
         printe("-----Un implement-----");
 //        if(null != uploadTask){
@@ -90,6 +98,15 @@ public class UploadUtils {
 //        if(null != uploadTask){
 //            uploadTask.();
 //        }
+    }
+
+    public static void unregisterCallback(AbsUploadCallback... callbacks){
+        if(null == callbacks || callbacks.length <= 0){
+            return;
+        }
+        for(AbsUploadCallback callback : callbacks){
+            UploadCallbackWrapper.unregisterCallback(callback);
+        }
     }
 
     private UploadTask simpleUpload(UploadRequest uploadRequest){
@@ -121,15 +138,15 @@ public class UploadUtils {
     private UploadTask uploadFileWithProgress(UploadRequest uploadRequest){
         UploadCallbackWrapper callbackWrapper = UploadCallbackWrapper.getCallbackWrapper(uploadRequest);
         if(uploadRequest.taskIsExist){
-            //TODO
             printe("---Skip exist task---");
-            return null;
+            return new UploadTask(callbackWrapper.getCall(), uploadRequest.syncRequest);
         }
 
         MultipartBody multipartBody = generateRequestBody(uploadRequest.getFormData());
 
         RequestBody requestBody;
         if(uploadRequest.needProgress){
+            callbackWrapper.setMinIntervalCallback(uploadRequest.callback.getMinIntervalTime());
             requestBody = ProgressHelper.withProgress(multipartBody, callbackWrapper);
         }else{
             requestBody = multipartBody;
@@ -147,6 +164,8 @@ public class UploadUtils {
             }else {
                 call.enqueue(callbackWrapper);
             }
+
+            callbackWrapper.recordTask(call);
             return new UploadTask(call, uploadRequest.syncRequest);
         }catch(Exception e){
             e.printStackTrace();

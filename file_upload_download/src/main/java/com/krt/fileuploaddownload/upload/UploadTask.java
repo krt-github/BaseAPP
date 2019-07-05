@@ -21,7 +21,7 @@ public class UploadTask {
 
     public void cancel(){
         if(null != uploadCall){
-            uploadCall.cancel();
+            UploadCallbackWrapper.cancelTask(uploadCall);
         }
     }
 }
