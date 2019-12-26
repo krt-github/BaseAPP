@@ -21,6 +21,7 @@
     <color name="press_to_speak_nor_bg_color">#D4F7FF</color>
     <color name="press_to_speak_press_bg_color">#DDDDDD</color>
 
-
     <color name="hint_color">#888888</color>
+    <color name="divider">#DDDDDD</color>
+
 </resources>
