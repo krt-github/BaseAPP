@@ -1,7 +1,6 @@
 package com.krt.basemodule.base;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
@@ -11,7 +10,7 @@ import android.os.Bundle;
 import android.support.annotation.ColorRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.SparseArray;
 import android.view.MotionEvent;
@@ -23,13 +22,13 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 
-import com.krt.basemodule.utils.ToastUtils;
 import com.krt.basemodule.debug.Debug;
 import com.krt.basemodule.error.ErrorToastHandler;
 import com.krt.basemodule.error.ErrorType;
 import com.krt.basemodule.error.IErrorHandler;
 import com.krt.basemodule.utils.ImageUtils;
 import com.krt.basemodule.utils.PermissionUtils;
+import com.krt.basemodule.utils.ToastUtils;
 import com.krt.basemodule.view.LoadingDialog;
 
 /**
@@ -326,20 +325,45 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * 设置Window 透明
-     */
-    public static void setTransparentForWindow(Activity activity) {
-        Window window = activity.getWindow();
-        window.setStatusBarColor(Color.TRANSPARENT);
-        View decorView = window.getDecorView();
+    protected void setStatusBarTextColorMode(boolean darkMode) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int flags = decorView.getSystemUiVisibility();
-            flags |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            decorView.setSystemUiVisibility(flags);
-        } else {
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+            View decor = getWindow().getDecorView();
+            decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | (darkMode ? View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR : View.SYSTEM_UI_FLAG_LAYOUT_STABLE));
         }
+    }
+
+    protected void setFullScreen(){
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                            WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        ActionBar actionBar = getSupportActionBar();
+        if(null != actionBar){
+            actionBar.hide();
+        }
+    }
+
+    protected void adapterCutout(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams layoutParams = getWindow().getAttributes();
+            layoutParams.layoutInDisplayCutoutMode =
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(layoutParams);
+        }
+    }
+
+    protected void setFitStatusBar() {
+        final Window window = getWindow();
+        window.setStatusBarColor(Color.TRANSPARENT); //Maybe try Color.parseColor("#01000000")
+
+        View decorView = window.getDecorView();
+        int flags = decorView.getSystemUiVisibility();
+        flags |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+        }
+        decorView.setSystemUiVisibility(flags);
     }
 
     @Override
